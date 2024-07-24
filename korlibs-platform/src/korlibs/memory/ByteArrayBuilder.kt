@@ -10,6 +10,8 @@ public class ByteArrayBuilder(public var data: ByteArray, size: Int = data.size,
     public constructor(initialCapacity: Int = 4096) : this(ByteArray(initialCapacity), 0)
 
     private var _size: Int = size
+
+    /** Current size of the buffer */
     public var size: Int get() = _size
         set(value) {
             val oldPosition = _size
@@ -44,6 +46,7 @@ public class ByteArrayBuilder(public var data: ByteArray, size: Int = data.size,
         return this
     }
 
+    /** Appends a byte [array] slice ([offset] and [len]) to the current buffer */
     public fun append(array: ByteArray, offset: Int = 0, len: Int = array.size - offset) {
         ensureCount(len)
         arraycopy(array, offset, this.data, _size, len)
@@ -51,50 +54,71 @@ public class ByteArrayBuilder(public var data: ByteArray, size: Int = data.size,
     }
 
     // @TODO: This exists to not return a reference value, that has a performance hit on K/N, we should then ensure
+    /** Appends a byte [v] to the buffer */
     public fun appendFast(v: Byte) {
         ensure(_size + 1)
         data[_size++] = v
     }
 
+    /** Appends a byte [v] to the buffer */
     public inline fun append(v: Byte): ByteArrayBuilder {
         appendFast(v)
         return this
     }
 
+    /** Appends a sequence vararg of bytes [v] to the buffer */
     public fun append(vararg v: Byte): Unit = append(v)
+    /** Appends a sequence vararg of bytes [v] (represented as ints) to the buffer */
     public fun append(vararg v: Int): ByteArrayBuilder = prepare(v.size) {
         for (n in 0 until v.size) this.data[this._size + n] = v[n].toByte()
     }
 
+    /** Appends an 8-bits byte [v] to the buffer */
     public fun appendByte(v: Int): ByteArrayBuilder = prepare(1) { data[_size] = v.toByte() }
 
+    /** Appends an 8-bits byte [v] to the buffer */
     public fun s8(v: Int): ByteArrayBuilder = appendByte(v)
 
+    /** Appends a 16-bit [v] to the buffer in [little] or big-endian */
     public fun s16(v: Int, little: Boolean): ByteArrayBuilder = prepare(2) { data.set16(_size, v, little) }
+    /** Appends a 16-bit [v] to the buffer in little-endian */
     public fun s16LE(v: Int): ByteArrayBuilder = prepare(2) { data.set16LE(_size, v) }
+    /** Appends a 16-bit [v] to the buffer in big-endian */
     public fun s16BE(v: Int): ByteArrayBuilder = prepare(2) { data.set16BE(_size, v) }
 
+    /** Appends a 24-bit integer [v] to the buffer in [little] or big-endian */
     public fun s24(v: Int, little: Boolean): ByteArrayBuilder = prepare(3) { data.set24(_size, v, little) }
+    /** Appends a 24-bit integer [v] to the buffer in little-endian */
     public fun s24LE(v: Int): ByteArrayBuilder = prepare(3) { data.set24LE(_size, v) }
+    /** Appends a 24-bit integer [v] to the buffer in big-endian */
     public fun s24BE(v: Int): ByteArrayBuilder = prepare(3) { data.set24BE(_size, v) }
 
+    /** Appends a 32-bit Int [v] to the buffer in [little] or big-endian */
     public fun s32(v: Int, little: Boolean): ByteArrayBuilder = prepare(4) { data.set32(_size, v, little) }
+    /** Appends a 32-bit Int [v] to the buffer in little-endian */
     public fun s32LE(v: Int): ByteArrayBuilder = prepare(4) { data.set32LE(_size, v) }
+    /** Appends a 32-bit Int [v] to the buffer in big-endian */
     public fun s32BE(v: Int): ByteArrayBuilder = prepare(4) { data.set32BE(_size, v) }
+
+    /** Appends a 32-bit Float [v] to the buffer in [little] or big-endian */
     public fun f32(v: Float, little: Boolean): ByteArrayBuilder = prepare(4) { data.setF32(_size, v, little) }
+    /** Appends a 32-bit Float [v] to the buffer in little-endian */
     public fun f32LE(v: Float): ByteArrayBuilder = prepare(4) { data.setF32LE(_size, v) }
+    /** Appends a 32-bit Float [v] to the buffer in big-endian */
     public fun f32BE(v: Float): ByteArrayBuilder = prepare(4) { data.setF32BE(_size, v) }
 
+    /** Appends a 64-bit Double [v] to the buffer in [little] or big-endian */
     public fun f64(v: Double, little: Boolean): ByteArrayBuilder = prepare(8) { data.setF64(_size, v, little) }
+    /** Appends a 64-bit Double [v] to the buffer in little-endian */
     public fun f64LE(v: Double): ByteArrayBuilder = prepare(8) { data.setF64LE(_size, v) }
+    /** Appends a 64-bit Double [v] to the buffer in big-endian */
     public fun f64BE(v: Double): ByteArrayBuilder = prepare(8) { data.setF64BE(_size, v) }
 
-    public fun clear() {
-        _size = 0
-    }
+    /** Clears/resets this [ByteArrayBuilder] */
+    public fun clear() { _size = 0 }
 
+    /** Converts this [ByteArrayBuilder] to a [ByteArray] with the current [size] */
     public fun toByteArray(): ByteArray = data.copyOf(_size)
-
 
     private fun arraycopy(src: ByteArray, srcPos: Int, dst: ByteArray, dstPos: Int, size: Int) {
         src.copyInto(dst, dstPos, srcPos, srcPos + size)
@@ -128,39 +152,69 @@ public class ByteArrayBuilder(public var data: ByteArray, size: Int = data.size,
     private fun Int.extractByte(offset: Int): Byte = (this ushr offset).toByte()
 }
 
-public inline class ByteArrayBuilderLE(public val bab: ByteArrayBuilder)
+/** [ByteArrayBuilder] variant that writes little-endian values */
+public inline class ByteArrayBuilderLE(public val bab: ByteArrayBuilder) {
+    /** Current size of the buffer */
+    public val size: Int get() = bab.size
+    /** Appends a byte [array] slice ([offset] and [len]) to the current buffer */
+    public fun append(array: ByteArray, offset: Int = 0, len: Int = array.size - offset): Unit = bab.append(array, offset, len)
+    /** Appends a byte [v] to the buffer */
+    public fun append(v: Byte): ByteArrayBuilder = bab.append(v)
+    /** Appends a byte [v] to the buffer */
+    public fun appendByte(v: Int): ByteArrayBuilder = bab.appendByte(v)
+    /** Appends a sequence vararg of bytes [v] to the buffer */
+    public fun append(vararg v: Byte): Unit = bab.append(*v)
+    /** Appends a sequence vararg of bytes [v] (represented as ints) to the buffer */
+    public fun append(vararg v: Int): ByteArrayBuilder = bab.append(*v)
+    /** Appends an 8-bit byte [v] to the buffer */
+    public fun s8(v: Int): ByteArrayBuilder = bab.s8(v)
+    /** Appends a 16-bit [v] to the buffer in little-endian */
+    public fun s16(v: Int): ByteArrayBuilder = bab.s16LE(v)
+    /** Appends a 24-bit integer [v] to the buffer in little-endian */
+    public fun s24(v: Int): ByteArrayBuilder = bab.s24LE(v)
+    /** Appends a 32-bit Int [v] to the buffer in little-endian */
+    public fun s32(v: Int): ByteArrayBuilder = bab.s32LE(v)
+    /** Appends a 32-bit Float [v] to the buffer in little-endian */
+    public fun f32(v: Float): ByteArrayBuilder = bab.f32LE(v)
+    /** Appends a 64-bit Double [v] to the buffer in little-endian */
+    public fun f64(v: Double): ByteArrayBuilder = bab.f64LE(v)
+    /** Clears/resets this [ByteArrayBuilderLE] */
+    public fun clear(): Unit = bab.clear()
+    /** Converts this [ByteArrayBuilderLE] to a [ByteArray] with the current [size] */
+    public fun toByteArray(): ByteArray = bab.toByteArray()
+}
 
-public val ByteArrayBuilderLE.size: Int get() = bab.size
-public fun ByteArrayBuilderLE.append(array: ByteArray, offset: Int = 0, len: Int = array.size - offset): Unit = bab.append(array, offset, len)
-public fun ByteArrayBuilderLE.append(v: Byte): ByteArrayBuilder = bab.append(v)
-public fun ByteArrayBuilderLE.appendByte(v: Int): ByteArrayBuilder = bab.appendByte(v)
-public fun ByteArrayBuilderLE.append(vararg v: Byte): Unit = bab.append(*v)
-public fun ByteArrayBuilderLE.append(vararg v: Int): ByteArrayBuilder = bab.append(*v)
-public fun ByteArrayBuilderLE.s8(v: Int): ByteArrayBuilder = bab.s8(v)
-public fun ByteArrayBuilderLE.s16(v: Int): ByteArrayBuilder = bab.s16LE(v)
-public fun ByteArrayBuilderLE.s24(v: Int): ByteArrayBuilder = bab.s24LE(v)
-public fun ByteArrayBuilderLE.s32(v: Int): ByteArrayBuilder = bab.s32LE(v)
-public fun ByteArrayBuilderLE.f32(v: Float): ByteArrayBuilder = bab.f32LE(v)
-public fun ByteArrayBuilderLE.f64(v: Double): ByteArrayBuilder = bab.f64LE(v)
-public fun ByteArrayBuilderLE.clear(): Unit = bab.clear()
-public fun ByteArrayBuilderLE.toByteArray(): ByteArray = bab.toByteArray()
-
-public inline class ByteArrayBuilderBE(public val bab: ByteArrayBuilder)
-
-public val ByteArrayBuilderBE.size: Int get() = bab.size
-public fun ByteArrayBuilderBE.append(array: ByteArray, offset: Int = 0, len: Int = array.size - offset): Unit = bab.append(array, offset, len)
-public fun ByteArrayBuilderBE.append(v: Byte): ByteArrayBuilder = bab.append(v)
-public fun ByteArrayBuilderBE.appendByte(v: Int): ByteArrayBuilder = bab.appendByte(v)
-public fun ByteArrayBuilderBE.append(vararg v: Byte): Unit = bab.append(*v)
-public fun ByteArrayBuilderBE.append(vararg v: Int): ByteArrayBuilder = bab.append(*v)
-public fun ByteArrayBuilderBE.s8(v: Int): ByteArrayBuilder = bab.s8(v)
-public fun ByteArrayBuilderBE.s16(v: Int): ByteArrayBuilder = bab.s16BE(v)
-public fun ByteArrayBuilderBE.s24(v: Int): ByteArrayBuilder = bab.s24BE(v)
-public fun ByteArrayBuilderBE.s32(v: Int): ByteArrayBuilder = bab.s32BE(v)
-public fun ByteArrayBuilderBE.f32(v: Float): ByteArrayBuilder = bab.f32BE(v)
-public fun ByteArrayBuilderBE.f64(v: Double): ByteArrayBuilder = bab.f64BE(v)
-public fun ByteArrayBuilderBE.clear(): Unit = bab.clear()
-public fun ByteArrayBuilderBE.toByteArray(): ByteArray = bab.toByteArray()
+/** [ByteArrayBuilder] variant that writes big-endian values */
+public inline class ByteArrayBuilderBE(public val bab: ByteArrayBuilder) {
+    /** Current size of the buffer */
+    public val size: Int get() = bab.size
+    /** Appends a byte [array] slice ([offset] and [len]) to the current buffer */
+    public fun append(array: ByteArray, offset: Int = 0, len: Int = array.size - offset): Unit = bab.append(array, offset, len)
+    /** Appends a byte [v] to the buffer */
+    public fun append(v: Byte): ByteArrayBuilder = bab.append(v)
+    /** Appends a byte [v] to the buffer */
+    public fun appendByte(v: Int): ByteArrayBuilder = bab.appendByte(v)
+    /** Appends a sequence vararg of bytes [v] to the buffer */
+    public fun append(vararg v: Byte): Unit = bab.append(*v)
+    /** Appends a sequence vararg of bytes [v] (represented as ints) to the buffer */
+    public fun append(vararg v: Int): ByteArrayBuilder = bab.append(*v)
+    /** Appends an 8-bit byte [v] to the buffer */
+    public fun s8(v: Int): ByteArrayBuilder = bab.s8(v)
+    /** Appends a 16-bit [v] to the buffer in big-endian */
+    public fun s16(v: Int): ByteArrayBuilder = bab.s16BE(v)
+    /** Appends a 24-bit integer [v] to the buffer in big-endian */
+    public fun s24(v: Int): ByteArrayBuilder = bab.s24BE(v)
+    /** Appends a 32-bit Int [v] to the buffer in big-endian */
+    public fun s32(v: Int): ByteArrayBuilder = bab.s32BE(v)
+    /** Appends a 32-bit Float [v] to the buffer in big-endian */
+    public fun f32(v: Float): ByteArrayBuilder = bab.f32BE(v)
+    /** Appends a 64-bit Double [v] to the buffer in big-endian */
+    public fun f64(v: Double): ByteArrayBuilder = bab.f64BE(v)
+    /** Clears/resets this [ByteArrayBuilderBE] */
+    public fun clear(): Unit = bab.clear()
+    /** Converts this [ByteArrayBuilderBE] to a [ByteArray] with the current [size] */
+    public fun toByteArray(): ByteArray = bab.toByteArray()
+}
 
 /** Analogous to [buildString] but for [ByteArray] */
 public inline fun buildByteArray(capacity: Int = 4096, callback: ByteArrayBuilder.() -> Unit): ByteArray =

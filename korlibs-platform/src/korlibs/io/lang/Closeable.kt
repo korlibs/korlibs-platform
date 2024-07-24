@@ -1,19 +1,15 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package korlibs.io.lang
 
 import korlibs.io.async.*
 import kotlin.contracts.*
 import kotlin.coroutines.cancellation.*
 
-@OptIn(ExperimentalStdlibApi::class)
 object DummyAutoCloseable : AutoCloseable {
     override fun close() = Unit
 }
 
 val DummyCloseable get() = DummyAutoCloseable
 
-@OptIn(ExperimentalStdlibApi::class)
 interface OptionalAutoCloseable : AutoCloseable {
     override fun close() = Unit
 }
