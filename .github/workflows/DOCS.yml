@@ -1,0 +1,38 @@
+name: DOCS
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      forced_version:
+        description: 'FORCED_VERSION to use'
+        required: true
+        type: string
+
+#permissions:
+#  contents: write
+#  discussions: write
+
+env:
+  CI: true
+  FORCED_VERSION: ${{ inputs.forced_version || github.ref }}
+  ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+  ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
+  SONATYPE_USERNAME: ${{ secrets.SONATYPEUSERNAME }}
+  SONATYPE_PASSWORD: ${{ secrets.SONATYPEPASSWORD }}
+  JAVA_VERSION: 17
+  JAVA_DISTRIBUTION: zulu
+
+jobs:
+  publish:
+    timeout-minutes: 300
+    runs-on: ubuntu-latest
+    steps:
+      - { name: Checkout, uses: actions/checkout@v3 }
+      - { name: Prepare Gradle, uses: gradle/actions/setup-gradle@d9c87d481d55275bb5441eef3fe0e46805f9ef70 } # https://github.com/gradle/actions/releases/tag/v3.5.0
+      - { name: Initialize Gradle, run: ./gradlew --no-configuration-cache }
+      - { name: Build Documentation, run: ./gradlew --no-configuration-cache dokkaHtmlMultiModule }
+      - { name: Upload artifact, uses: actions/upload-pages-artifact@v3, with: { path: 'build/dokka/htmlMultiModule' } }
+      - { name: Deploy 🚀 to GitHub Pages, id: deployment, uses: actions/deploy-pages@v4}
