@@ -791,7 +791,7 @@ open class SimpleHttpClient(
     val user: String? = null,
     val pass: String? = null
 ) {
-    open fun requestWithRetry(url: String, body: Any? = null, nretries: Int = 5): JsonElement {
+    open fun requestWithRetry(url: String, body: Any? = null, nretries: Int = 15): JsonElement {
         var retryCount = 0
         while (true) {
             try {
@@ -803,7 +803,7 @@ open class SimpleHttpClient(
                         retryCount++
                         if (retryCount >= nretries) throw RuntimeException("Couldn't access $url after $nretries retries :: ${e.responseCode} : ${e.message}", e)
                         println("Retrying... retryCount=$retryCount/$nretries")
-                        Thread.sleep(15_000L)
+                        Thread.sleep(15_000L + (retryCount * 5_000L))
                         continue
                     }
                     else -> {
