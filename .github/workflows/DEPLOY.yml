@@ -23,7 +23,7 @@ env:
   # Vanniktech maven-publish plugin reads these Gradle project properties for Central Portal auth
   ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_KORGE_SONATYPE_USERNAME }}
   ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_KORGE_SONATYPE_PASSWORD }}
-  JAVA_VERSION: 17
+  JAVA_VERSION: 21
   JAVA_DISTRIBUTION: zulu
 
 jobs:
