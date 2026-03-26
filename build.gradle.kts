@@ -39,7 +39,7 @@ val JVM_TARGET = JvmTarget.JVM_1_8
 val JDK_VERSION = org.gradle.api.JavaVersion.VERSION_1_8
 //val JVM_TARGET = JvmTarget.JVM_11
 //val JDK_VERSION = org.gradle.api.JavaVersion.VERSION_11
-val GROUP = "com.soywiz"
+val GROUP = "org.korge"
 
 kotlin {
     jvm()
@@ -87,7 +87,7 @@ allprojects {
         //    }
         //}
         compileSdk = 33
-        namespace = "com.soywiz.${project.name.replace("-", ".")}"
+        namespace = "org.korge.${project.name.replace("-", ".")}"
         defaultConfig {
             minSdk = 20
         }
@@ -306,7 +306,7 @@ class SonatypeProps(val project: Project) {
 
         @TaskAction
         fun action() {
-            val profileId = sonatype!!.findProfileIdByGroupId("com.soywiz")
+            val profileId = sonatype!!.findProfileIdByGroupId("org.korge")
             val stagedRepositoryId = sonatype!!.startStagedRepository(profileId)
             println("profileId=$profileId")
             println("stagedRepositoryId=$stagedRepositoryId")
@@ -406,7 +406,7 @@ subprojects {
     //}
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink::class) {
-        // /Users/soywiz/projects/korge-korlibs/korlibs-io/build/bin/iosSimulatorArm64/debugTest
+        // /Users/korge/projects/korge-korlibs/korlibs-io/build/bin/iosSimulatorArm64/debugTest
         //println(this.target)
         //val target = Regex("^link(.*?)Test.*$").find(this.name)?.groupValues?.getOrNull(1)?.replaceFirstChar { it.lowercaseChar() }
         //println(target)
@@ -549,7 +549,7 @@ subprojects {
                 //if (multiplatform) {
                 //if (!isGradlePluginMarker) {
                 run {
-                    val defaultGitUrl = "https://github.com/korlibs/korge-korlibs"
+                    val defaultGitUrl = "https://github.com/korlibs/korlibs"
                     publication.pom.also { pom ->
                         pom.name.set(project.name)
                         pom.description.set(project.description ?: getCustomProp("project.description", project.description ?: project.name))
@@ -557,14 +557,14 @@ subprojects {
                         pom.licenses {
                             license {
                                 name.set(getCustomProp("project.license.name", "MIT"))
-                                url.set(getCustomProp("project.license.url", "https://raw.githubusercontent.com/korlibs/korge-korlibs/main/LICENSE"))
+                                url.set(getCustomProp("project.license.url", "https://raw.githubusercontent.com/korlibs/korge/refs/heads/main/LICENSE"))
                             }
                         }
                         pom.developers {
                             developer {
-                                id.set(getCustomProp("project.author.id", "soywiz"))
-                                name.set(getCustomProp("project.author.name", "Carlos Ballesteros Velasco"))
-                                email.set(getCustomProp("project.author.email", "soywiz@gmail.com"))
+                                id.set(getCustomProp("project.author.id", "korge"))
+                                name.set(getCustomProp("project.author.name", "Korge Team"))
+                                email.set(getCustomProp("project.author.email", "info@korge.org"))
                             }
                         }
                         pom.scm {
