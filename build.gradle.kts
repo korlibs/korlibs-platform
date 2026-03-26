@@ -96,6 +96,15 @@ open class DenoTestTask : AbstractTestTask() {
 
     //var isDryRun by org.jetbrains.kotlin.gradle.utils.property { false }
 
+    @get:Internal
+    val projectPathName: String = project.path.trim(':').replace(':', '-')
+
+    @get:Internal
+    val rootDir: File = project.rootProject.rootDir
+
+    @get:Internal
+    val projectDir: File = project.projectDir
+
     init {
         this.group = "verification"
         this.dependsOn("compileTestDevelopmentExecutableKotlinJs")
@@ -118,7 +127,7 @@ open class DenoTestTask : AbstractTestTask() {
     }
 
     override fun createTestExecuter(): TestExecuter<out TestExecutionSpec> {
-        return DenoTestExecuter(this.project, this.filter)
+        return DenoTestExecuter(projectPathName, rootDir, projectDir, this.filter)
     }
     //override fun createTestExecuter(): TestExecuter<out TestExecutionSpec> = TODO()
     override fun createTestExecutionSpec(): TestExecutionSpec = DenoTestExecutionSpec()
@@ -127,17 +136,11 @@ open class DenoTestTask : AbstractTestTask() {
         outputs.upToDateWhen { false }
     }
 
-    class DenoTestExecuter(val project: Project, val filter: TestFilter) : TestExecuter<DenoTestExecutionSpec> {
-        private fun Project.fullPathName(): String {
-            //KotlinTest
-            if (this.parent == null) return this.name
-            return this.parent!!.fullPathName() + ":" + this.name
-        }
-
+    class DenoTestExecuter(val projectPathName: String, val rootDir: File, val projectDir: File, val filter: TestFilter) : TestExecuter<DenoTestExecutionSpec> {
         override fun execute(testExecutionSpec: DenoTestExecutionSpec, testResultProcessor: TestResultProcessor) {
-            val baseTestFileNameBase = this.project.fullPathName().trim(':').replace(':', '-') + "-test"
+            val baseTestFileNameBase = "$projectPathName-test"
             val baseTestFileName = "$baseTestFileNameBase.mjs"
-            val runFile = File(this.project.rootProject.rootDir, "build/js/packages/$baseTestFileNameBase/kotlin/$baseTestFileName.deno.mjs")
+            val runFile = File(rootDir, "build/js/packages/$baseTestFileNameBase/kotlin/$baseTestFileName.deno.mjs")
 
             runFile.parentFile.mkdirs()
             runFile.writeText(
@@ -164,7 +167,7 @@ open class DenoTestTask : AbstractTestTask() {
                 if (filter.includePatterns.isEmpty()) {
                     add("--filter=${filter.includePatterns.joinToString(",")}")
                 }
-                add("--junit-path=${project.file("build/test-results/jsDenoTest/junit.xml").absolutePath}")
+                add("--junit-path=${File(projectDir, "build/test-results/jsDenoTest/junit.xml").absolutePath}")
                 add(runFile.absolutePath)
             }).directory(runFile.parentFile)
                 .start()
