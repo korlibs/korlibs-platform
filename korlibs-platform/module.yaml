@@ -10,5 +10,7 @@ aliases:
 
 dependencies:
 
-test-dependencies:
+dependencies@jsAndWasmJs:
+  - org.jetbrains.kotlinx:kotlinx-browser:0.5.0: exported
 
+test-dependencies:

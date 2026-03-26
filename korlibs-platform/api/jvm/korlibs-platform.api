@@ -20,7 +20,7 @@ public final class korlibs/io/async/AsyncCloseableKt {
 }
 
 public abstract interface class korlibs/io/async/OptionalAsyncCloseable : korlibs/io/async/AsyncCloseable {
-	public abstract fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class korlibs/io/async/OptionalAsyncCloseable$DefaultImpls {
@@ -67,7 +67,7 @@ public final class korlibs/io/lang/ClassExt_jvmAndAndroidKt {
 
 public abstract interface class korlibs/io/lang/CloseableCancellable : java/lang/AutoCloseable, korlibs/io/lang/Cancellable {
 	public static final field Companion Lkorlibs/io/lang/CloseableCancellable$Companion;
-	public abstract fun cancel (Ljava/lang/Throwable;)V
+	public fun cancel (Ljava/lang/Throwable;)V
 }
 
 public final class korlibs/io/lang/CloseableCancellable$Companion {
@@ -230,7 +230,7 @@ public final class korlibs/io/lang/NotImplementedException : java/lang/Exception
 }
 
 public abstract interface class korlibs/io/lang/OptionalAutoCloseable : java/lang/AutoCloseable {
-	public abstract fun close ()V
+	public fun close ()V
 }
 
 public final class korlibs/io/lang/OptionalAutoCloseable$DefaultImpls {
@@ -484,34 +484,34 @@ public abstract interface class korlibs/platform/Platform {
 	public abstract fun getRawOsName ()Ljava/lang/String;
 	public abstract fun getRawPlatformName ()Ljava/lang/String;
 	public abstract fun getRuntime ()Lkorlibs/platform/Runtime;
-	public abstract fun isAndroid ()Z
-	public abstract fun isApple ()Z
-	public abstract fun isAppleMobile ()Z
-	public abstract fun isBigEndian ()Z
-	public abstract fun isDebug ()Z
-	public abstract fun isInsideBrowser ()Z
-	public abstract fun isIos ()Z
-	public abstract fun isJs ()Z
-	public abstract fun isJsBrowser ()Z
-	public abstract fun isJsBrowserOrWorker ()Z
-	public abstract fun isJsDenoJs ()Z
-	public abstract fun isJsNodeJs ()Z
-	public abstract fun isJsOrWasm ()Z
-	public abstract fun isJsShell ()Z
-	public abstract fun isJsWorker ()Z
-	public abstract fun isJvm ()Z
-	public abstract fun isLinux ()Z
-	public abstract fun isLittleEndian ()Z
-	public abstract fun isMac ()Z
-	public abstract fun isNative ()Z
-	public abstract fun isNativeDesktop ()Z
-	public abstract fun isPosix ()Z
-	public abstract fun isRelease ()Z
-	public abstract fun isTvos ()Z
-	public abstract fun isUnix ()Z
-	public abstract fun isWasm ()Z
-	public abstract fun isWatchos ()Z
-	public abstract fun isWindows ()Z
+	public fun isAndroid ()Z
+	public fun isApple ()Z
+	public fun isAppleMobile ()Z
+	public fun isBigEndian ()Z
+	public fun isDebug ()Z
+	public fun isInsideBrowser ()Z
+	public fun isIos ()Z
+	public fun isJs ()Z
+	public fun isJsBrowser ()Z
+	public fun isJsBrowserOrWorker ()Z
+	public fun isJsDenoJs ()Z
+	public fun isJsNodeJs ()Z
+	public fun isJsOrWasm ()Z
+	public fun isJsShell ()Z
+	public fun isJsWorker ()Z
+	public fun isJvm ()Z
+	public fun isLinux ()Z
+	public fun isLittleEndian ()Z
+	public fun isMac ()Z
+	public fun isNative ()Z
+	public fun isNativeDesktop ()Z
+	public fun isPosix ()Z
+	public fun isRelease ()Z
+	public fun isTvos ()Z
+	public fun isUnix ()Z
+	public fun isWasm ()Z
+	public fun isWatchos ()Z
+	public fun isWindows ()Z
 }
 
 public final class korlibs/platform/Platform$Companion : korlibs/platform/Platform {
