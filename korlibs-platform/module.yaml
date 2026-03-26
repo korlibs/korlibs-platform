@@ -10,7 +10,7 @@ aliases:
 
 dependencies:
 
-dependencies@wasm:
-  - org.jetbrains.kotlin:kotlin-browser: exported
+dependencies@jsAndWasmJs:
+  - org.jetbrains.kotlinx:kotlinx-browser:0.5.0: exported
 
 test-dependencies:
