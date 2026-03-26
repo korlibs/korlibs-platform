@@ -253,8 +253,11 @@ private fun Project.configureCentralPortalCompatibilityProps() {
     val extras = extensions.extraProperties
 
     fun mapIfAbsent(targetKey: String, vararg sources: () -> String?) {
-        if (extras.has(targetKey) || findProperty(targetKey) != null) return
-        val value = sources.firstNotNullOfOrNull { it() } ?: return
+        // Skip if already set to a non-blank value via extras or project properties
+        if (extras.has(targetKey) && extras[targetKey]?.toString().isNullOrBlank().not()) return
+        if (findProperty(targetKey)?.toString().isNullOrBlank().not()) return
+        // Find the first non-blank value among the sources
+        val value = sources.firstNotNullOfOrNull { it()?.takeIf { v -> v.isNotBlank() } } ?: return
         extras[targetKey] = value
     }
 
@@ -283,12 +286,13 @@ private fun Project.configureCentralPortalCompatibilityProps() {
 }
 
 private fun Project.hasSigningCredentials(): Boolean {
-    // Check both the native Vanniktech property name and legacy names
-    return System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") != null ||
-        System.getenv("ORG_GRADLE_PROJECT_signingKey") != null ||
-        findProperty("signingInMemoryKey") != null ||
-        findProperty("signing.secretKeyRingFile") != null ||
-        extensions.extraProperties.has("signingInMemoryKey")
+    // A credential is only considered present when it resolves to a non-blank string.
+    fun String?.isPresent() = !isNullOrBlank()
+    return System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey").isPresent() ||
+        System.getenv("ORG_GRADLE_PROJECT_signingKey").isPresent() ||
+        findProperty("signingInMemoryKey")?.toString().isPresent() ||
+        findProperty("signing.secretKeyRingFile")?.toString().isPresent() ||
+        extensions.extraProperties.runCatching { get("signingInMemoryKey")?.toString() }.getOrNull().isPresent()
 }
 
 subprojects {
