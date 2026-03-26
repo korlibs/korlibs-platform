@@ -38,10 +38,10 @@ jobs:
           - { os: ubuntu-latest, publishTask: "publishAndroidReleasePublicationToMavenCentral" }
           - { os: ubuntu-latest, publishTask: "publishKotlinMultiplatformPublicationToMavenCentral publishJvmPublicationToMavenCentral" }
           - { os: ubuntu-latest, publishTask: "publishJsPublicationToMavenCentral publishWasmJsPublicationToMavenCentral" }
-          - { os: macos-13, publishTask: "publishMacosX64PublicationToMavenCentral publishMacosArm64PublicationToMavenCentral" }
-          - { os: macos-13, publishTask: "publishTvosArm64PublicationToMavenCentral publishTvosSimulatorArm64PublicationToMavenCentral publishTvosX64PublicationToMavenCentral" }
-          - { os: macos-13, publishTask: "publishIosArm64PublicationToMavenCentral publishIosSimulatorArm64PublicationToMavenCentral publishIosX64PublicationToMavenCentral" }
-          - { os: macos-13, publishTask: "publishWatchosArm64PublicationToMavenCentral publishWatchosArm32PublicationToMavenCentral publishWatchosDeviceArm64PublicationToMavenCentral publishWatchosSimulatorArm64PublicationToMavenCentral" }
+          - { os: macos-latest, publishTask: "publishMacosX64PublicationToMavenCentral publishMacosArm64PublicationToMavenCentral" }
+          - { os: macos-latest, publishTask: "publishTvosArm64PublicationToMavenCentral publishTvosSimulatorArm64PublicationToMavenCentral publishTvosX64PublicationToMavenCentral" }
+          - { os: macos-latest, publishTask: "publishIosArm64PublicationToMavenCentral publishIosSimulatorArm64PublicationToMavenCentral publishIosX64PublicationToMavenCentral" }
+          - { os: macos-latest, publishTask: "publishWatchosArm64PublicationToMavenCentral publishWatchosArm32PublicationToMavenCentral publishWatchosDeviceArm64PublicationToMavenCentral publishWatchosSimulatorArm64PublicationToMavenCentral" }
     timeout-minutes: 300
     runs-on: ${{ matrix.os }}
     steps:
