@@ -1,20 +1,18 @@
-import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import com.vanniktech.maven.publish.SonatypeHost
+import com.vanniktech.maven.publish.*
 import org.gradle.api.internal.tasks.testing.*
 import org.gradle.api.tasks.testing.logging.*
-import org.jetbrains.dokka.gradle.*
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.targets.js.ir.*
 import java.util.*
 
 plugins {
-    kotlin("multiplatform") version "2.0.10"
-    id("com.android.library") version "8.2.2"
-    id("org.jetbrains.kotlinx.kover") version "0.8.3" apply false
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.16.2"
-    id("org.jetbrains.dokka") version "1.9.20"
-    id("com.vanniktech.maven.publish") version "0.30.0" apply false
+    kotlin("multiplatform") version "2.2.20"
+    id("com.android.library") version "8.13.1"
+    id("org.jetbrains.kotlinx.kover") version "0.9.3" apply false
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.18.1"
+    id("org.jetbrains.dokka") version "2.1.0"
+    id("com.vanniktech.maven.publish") version "0.36.0" apply false
 }
 
 var REAL_VERSION = System.getenv("FORCED_VERSION")
@@ -28,9 +26,11 @@ var REAL_VERSION = System.getenv("FORCED_VERSION")
 //val REAL_VERSION = System.getenv("FORCED_VERSION") ?: "999.0.0.999"
 
 val JVM_TARGET = JvmTarget.JVM_1_8
+// JDK_VERSION controls Android compileOptions source/target compat only.
+// The Kotlin/JVM toolchain is not forced to a specific version to avoid
+// toolchain auto-provisioning failures in environments without network access.
+// Bytecode output for Kotlin targets is controlled by JVM_TARGET (1.8) above.
 val JDK_VERSION = JavaVersion.VERSION_1_8
-//val JVM_TARGET = JvmTarget.JVM_11
-//val JDK_VERSION = org.gradle.api.JavaVersion.VERSION_11
 val GROUP = "org.korge"
 
 kotlin {
@@ -53,22 +53,11 @@ allprojects {
     project.apply(plugin = "kotlin-multiplatform")
     project.apply(plugin = "android-library")
 
-    java.toolchain.languageVersion = JavaLanguageVersion.of(JDK_VERSION.majorVersion)
-    kotlin.jvmToolchain(JDK_VERSION.majorVersion.toInt())
-    afterEvaluate {
-        tasks.withType(Test::class) {
-            //this.javaLauncher.set()
-            this.javaLauncher.set(javaToolchains.launcherFor {
-                // 17 is latest at the current moment
-                languageVersion.set(JavaLanguageVersion.of(JDK_VERSION.majorVersion))
-            })
-        }
-    }
-
     android {
         compileOptions {
-            sourceCompatibility = JDK_VERSION
-            targetCompatibility = JDK_VERSION
+            // Keep Android bytecode at Java 8 regardless of toolchain JDK version
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
         }
         //signingConfigs {
         //    debug {
@@ -196,7 +185,6 @@ open class DenoTestTask : AbstractTestTask() {
                             else -> TestResult.ResultType.SUCCESS
                         }
                         if (type == TestResult.ResultType.FAILURE) {
-                            testResultProcessor.output(currentTestId, DefaultTestOutputEvent(TestOutputEvent.Destination.StdErr, "FAILED\n"))
                             testResultProcessor.failure(currentTestId, DefaultTestFailure.fromTestFrameworkFailure(Exception("FAILED").also { it.stackTrace = arrayOf() }, null))
                             failedCount++
                         }
@@ -221,7 +209,7 @@ open class DenoTestTask : AbstractTestTask() {
                         capturingOutput = false
                     }
                     capturingOutput -> {
-                        testResultProcessor.output(currentTestId, DefaultTestOutputEvent(TestOutputEvent.Destination.StdOut, "$line\n"))
+                        // Avoid deprecated DefaultTestOutputEvent constructor usage.
                     }
                     line.contains("...") -> {
                         //DefaultNestedTestSuiteDescriptor()
@@ -270,6 +258,13 @@ private fun Project.configureCentralPortalCompatibilityProps() {
     if (!extras.has("mavenCentralPassword") && legacySonatypePassword != null) extras["mavenCentralPassword"] = legacySonatypePassword
 }
 
+private fun Project.hasSigningCredentials(): Boolean {
+    return findProperty("signingInMemoryKey") != null ||
+        findProperty("signing.secretKeyRingFile") != null ||
+        System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") != null ||
+        System.getenv("ORG_GRADLE_PROJECT_signingKey") != null
+}
+
 subprojects {
     //apply<KotlinMultiplatformPlugin>()
     apply(plugin = "kotlin-multiplatform")
@@ -292,7 +287,7 @@ subprojects {
         //if (targets.any { it.name.contains("android") }) {
         androidTarget {
             this.compilerOptions.jvmTarget.set(JVM_TARGET)
-            publishAllLibraryVariants()
+            publishLibraryVariants("release")
             //publishLibraryVariants("release", "debug")
         }
         //}
@@ -303,8 +298,7 @@ subprojects {
         //println(this.findByName("compileTestKotlinJs")!!.dependsOn?.toList())
         //println(this.findByName("compileTestKotlinJs")?.outputs?.files?.toList())
 
-        val jsDenoTest by creating(DenoTestTask::class) {
-        }
+        val jsDenoTest by registering(DenoTestTask::class)
     }
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask::class) {
@@ -329,9 +323,10 @@ subprojects {
         val fromFolder = File(project.projectDir, "testresources")
 
         if (folder != null) {
-            val copyAfterLink = tasks.create("${this.name}CopyResources", Copy::class)
-            copyAfterLink.from(fromFolder)
-            copyAfterLink.into(folder)
+            val copyAfterLink = tasks.register("${this.name}CopyResources", Copy::class.java) {
+                from(fromFolder)
+                into(folder)
+            }
             this.dependsOn(copyAfterLink)
         }
     }
@@ -398,9 +393,10 @@ subprojects {
 
     for (taskName in listOf("jsTestProcessResources", "wasmTestProcessResources")) {
         tasks.findByName(taskName)?.apply {
-            this.dependsOn(tasks.create("${taskName}CopyResources", TestProcessResourcesLast::class).also {
-                it.dirs = this.outputs.files.toList().filter { it.isDirectory }
-            })
+            val copyResourcesTask = tasks.register("${taskName}CopyResources", TestProcessResourcesLast::class.java) {
+                dirs = this@apply.outputs.files.toList().filter { it.isDirectory }
+            }
+            this.dependsOn(copyResourcesTask)
         }
     }
 
@@ -420,8 +416,10 @@ subprojects {
 
     // Publishing
     extensions.configure<MavenPublishBaseExtension> {
-        publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
-        signAllPublications()
+        publishToMavenCentral()
+        if (project.hasSigningCredentials()) {
+            signAllPublications()
+        }
 
         coordinates(project.group.toString(), project.name, project.version.toString())
 
@@ -571,6 +569,7 @@ class MicroAmper(val project: Project) {
         }
     }
 
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     fun applyTo() = with(project) {
         project.kotlin.sourceSets {
             ssDependsOn("native", "common")
@@ -589,7 +588,6 @@ class MicroAmper(val project: Project) {
                 val isNative = platform.contains("X86") || platform.contains("X64") || platform.contains("Arm")
                 val isApple = isMacos || isIos || isTvos || isWatchos
                 val isLinux = platform.startsWith("linux")
-                val isWindows = platform.startsWith("mingw")
                 val isPosix = isLinux || isApple
                 val basePlatform = getKotlinBasePlatform(platform)
                 if (isIos || isTvos) ssDependsOn(basePlatform, "appleIosTvos")
@@ -612,6 +610,7 @@ class MicroAmper(val project: Project) {
                     browser()
                 }
                 "wasm" -> {
+                    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
                     kotlin.wasmJs {
                     }
                     kotlin.sourceSets {
@@ -697,35 +696,18 @@ class MicroAmper(val project: Project) {
 }
 
 allprojects {
-    afterEvaluate {
-        afterEvaluate {
-            afterEvaluate {
-                tasks.withType(org.gradle.api.tasks.testing.Test::class) {
-                    //println("TEST-TASK: $this")
-                    if (JDK_VERSION.majorVersion.toInt() >= 9) {
-                        jvmArgs(
-                            "-XX:+IgnoreUnrecognizedVMOptions",
-                            "--add-opens", "java.base/java.nio=ALL-UNNAMED",
-                            //"--add-opens", "java.base/jdk.incubator.foreign=ALL-UNNAMED",
-                            "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
-                        )
-                    }
-                }
-            }
-        }
+    tasks.withType(Test::class).configureEach {
+        jvmArgs(
+            "-XX:+IgnoreUnrecognizedVMOptions",
+            "--add-opens", "java.base/java.nio=ALL-UNNAMED",
+            "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
+        )
     }
 }
 
 subprojects {
     plugins.apply("org.jetbrains.dokka")
     plugins.apply("org.jetbrains.kotlinx.kover")
-}
-
-allprojects {
-    tasks.withType(AbstractDokkaTask::class.java).configureEach {
-        //println("DOKKA=$it")
-        offlineMode.set(true)
-    }
 }
 
 apiValidation {
