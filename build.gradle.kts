@@ -248,24 +248,47 @@ open class DenoTestTask : AbstractTestTask() {
 }
 
 private fun Project.configureCentralPortalCompatibilityProps() {
-    // Keep previous env/property names working while using Vanniktech Central Portal publishing.
-    val legacySigningKey = System.getenv("ORG_GRADLE_PROJECT_signingKey") ?: findProperty("signing.signingKey")?.toString()
-    val legacySigningPassword = System.getenv("ORG_GRADLE_PROJECT_signingPassword") ?: findProperty("signing.password")?.toString()
-    val legacySonatypeUser = System.getenv("SONATYPE_USERNAME") ?: rootProject.findProperty("SONATYPE_USERNAME")?.toString() ?: findProperty("sonatypeUsername")?.toString()
-    val legacySonatypePassword = System.getenv("SONATYPE_PASSWORD") ?: rootProject.findProperty("SONATYPE_PASSWORD")?.toString() ?: findProperty("sonatypePassword")?.toString()
-
+    // Map legacy env/property names to the exact names the Vanniktech plugin expects.
+    // Vanniktech reads: signingInMemoryKey, signingInMemoryKeyPassword, mavenCentralUsername, mavenCentralPassword
     val extras = extensions.extraProperties
-    if (!extras.has("signingInMemoryKey") && legacySigningKey != null) extras["signingInMemoryKey"] = legacySigningKey
-    if (!extras.has("signingInMemoryKeyPassword") && legacySigningPassword != null) extras["signingInMemoryKeyPassword"] = legacySigningPassword
-    if (!extras.has("mavenCentralUsername") && legacySonatypeUser != null) extras["mavenCentralUsername"] = legacySonatypeUser
-    if (!extras.has("mavenCentralPassword") && legacySonatypePassword != null) extras["mavenCentralPassword"] = legacySonatypePassword
+
+    fun mapIfAbsent(targetKey: String, vararg sources: () -> String?) {
+        if (extras.has(targetKey) || findProperty(targetKey) != null) return
+        val value = sources.firstNotNullOfOrNull { it() } ?: return
+        extras[targetKey] = value
+    }
+
+    mapIfAbsent("signingInMemoryKey",
+        { System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") },
+        { System.getenv("ORG_GRADLE_PROJECT_signingKey") },
+        { findProperty("signing.signingKey")?.toString() }
+    )
+    mapIfAbsent("signingInMemoryKeyPassword",
+        { System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword") },
+        { System.getenv("ORG_GRADLE_PROJECT_signingPassword") },
+        { findProperty("signing.password")?.toString() }
+    )
+    mapIfAbsent("mavenCentralUsername",
+        { System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername") },
+        { System.getenv("SONATYPE_USERNAME") },
+        { rootProject.findProperty("SONATYPE_USERNAME")?.toString() },
+        { findProperty("sonatypeUsername")?.toString() }
+    )
+    mapIfAbsent("mavenCentralPassword",
+        { System.getenv("ORG_GRADLE_PROJECT_mavenCentralPassword") },
+        { System.getenv("SONATYPE_PASSWORD") },
+        { rootProject.findProperty("SONATYPE_PASSWORD")?.toString() },
+        { findProperty("sonatypePassword")?.toString() }
+    )
 }
 
 private fun Project.hasSigningCredentials(): Boolean {
-    return findProperty("signingInMemoryKey") != null ||
+    // Check both the native Vanniktech property name and legacy names
+    return System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") != null ||
+        System.getenv("ORG_GRADLE_PROJECT_signingKey") != null ||
+        findProperty("signingInMemoryKey") != null ||
         findProperty("signing.secretKeyRingFile") != null ||
-        System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") != null ||
-        System.getenv("ORG_GRADLE_PROJECT_signingKey") != null
+        extensions.extraProperties.has("signingInMemoryKey")
 }
 
 subprojects {
@@ -419,8 +442,8 @@ subprojects {
 
     // Publishing
     extensions.configure<MavenPublishBaseExtension> {
-        publishToMavenCentral()
         if (project.hasSigningCredentials()) {
+            publishToMavenCentral()
             signAllPublications()
         }
 

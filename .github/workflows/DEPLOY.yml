@@ -18,9 +18,10 @@ on:
 env:
   CI: true
   FORCED_VERSION: ${{ inputs.forced_version || github.ref }}
-  ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
-  ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
-  # Vanniktech maven-publish plugin reads these Gradle project properties for Central Portal auth
+  # Vanniktech maven-publish plugin reads these exact Gradle project property names for signing
+  ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
+  # Vanniktech maven-publish plugin reads these for Central Portal auth
   ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_KORGE_SONATYPE_USERNAME }}
   ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_KORGE_SONATYPE_PASSWORD }}
   JAVA_VERSION: 21
